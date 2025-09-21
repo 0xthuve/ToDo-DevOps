@@ -1,0 +1,114 @@
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const Task = require('./model/task');
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
+const authMiddleware = require("./middleware/authMiddleware"); // import middleware
+
+const app = express();
+app.use(cors());
+const PORT = process.env.PORT || 5000;
+const FRONTEND_URL = process.env.FRONTEND_URL;
+
+
+
+// Middleware
+// Increase body size limits to support base64 image uploads
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Connect to MongoDB
+mongoose.connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+}).then(() => {
+    console.log('Connected to MongoDB');
+}).catch(err => {
+    console.error('Error connecting to MongoDB:', err);
+});
+
+// Routes
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/user', require('./routes/user'));
+
+
+// Secure route with JWT
+app.get('/api/alltasks', authMiddleware, async (req, res) => {
+    try {
+        console.log('Authenticated user:', req.user); // Debug log
+        
+        // Use req.user.user.id to match the JWT payload structure from auth.js
+        const tasks = await Task.find({ userId: req.user.user.id });
+        
+        res.json(tasks);
+    } catch (error) {
+        console.error('Error in /api/alltasks:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+
+app.post('/api/addtask', authMiddleware, async (req, res) => {
+  const { title } = req.body;
+  if (!title || title.trim() === '') {
+    return res.status(400).json({ error: 'Task title is required' });
+  }
+  try {
+    const newTask = new Task({
+      title: title.trim(),
+      completed: false,
+      userId: req.user.user.id // Add user ID to associate task with authenticated user
+    });
+    await newTask.save();
+    res.status(201).json(newTask);
+  } catch (error) {
+    console.error('Error adding task:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.delete('/api/deletetask/:id', authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  try {
+    // Only allow users to delete their own tasks
+    const deletedTask = await Task.findOneAndDelete({ 
+      _id: id, 
+      userId: req.user.user.id 
+    });
+    if (!deletedTask) {
+      return res.status(404).json({ error: 'Task not found or access denied' });
+    }
+    res.json({ message: 'Task deleted successfully', task: deletedTask });
+  } catch (error) {
+    console.error('Error deleting task:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.put('/api/updatetask/:id', authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  try {
+    // Only allow users to update their own tasks
+    const task = await Task.findOne({ 
+      _id: id, 
+      userId: req.user.user.id 
+    });
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found or access denied' });
+    }
+    
+    task.completed = !task.completed;
+    await task.save();
+    
+    res.json(task);
+  } catch (error) {
+    console.error('Error updating task:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+});
