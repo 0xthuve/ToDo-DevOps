@@ -4,7 +4,7 @@ const cors = require('cors');
 const Task = require('./model/task');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
-const authMiddleware = require("./middleware/authMiddleware"); // import middleware
+const authMiddleware = require("./middleware/authMiddleware.js"); // import middleware
 
 const app = express();
 app.use(cors());
