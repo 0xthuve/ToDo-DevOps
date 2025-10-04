@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import API_BASE_URL from '../config/api';
 import {
   Container,
   Typography,
@@ -37,7 +38,7 @@ const TaskList = () => {
       return;
     }
 
-    fetch('http://localhost:5000/api/alltasks', {
+    fetch(`${API_BASE_URL}/alltasks`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -76,7 +77,7 @@ const TaskList = () => {
     );
     setTasks(updatedTasks);
 
-    fetch(`http://localhost:5000/api/updatetask/${taskId}`, {
+    fetch(`${API_BASE_URL}/updatetask/${taskId}`, {
       method: 'PUT',
       headers: { 
         'Content-Type': 'application/json',
@@ -98,7 +99,7 @@ const TaskList = () => {
     const updatedTasks = tasks.filter((task) => task._id !== taskId);
     setTasks(updatedTasks);
 
-    fetch(`http://localhost:5000/api/deletetask/${taskId}`, {
+    fetch(`${API_BASE_URL}/deletetask/${taskId}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`

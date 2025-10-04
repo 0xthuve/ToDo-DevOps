@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import API_BASE_URL from '../config/api';
 import {
   Container,
   TextField,
@@ -52,7 +53,7 @@ const Signup = () => {
     }
 
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/signup', { fullName, email, password });
+      const res = await axios.post(`${API_BASE_URL}/auth/signup`, { fullName, email, password });
       localStorage.setItem('token', res.data.token);
       window.location.href = '/login';
     } catch (err) {

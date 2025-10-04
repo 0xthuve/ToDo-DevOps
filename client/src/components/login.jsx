@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import API_BASE_URL from '../config/api';
 import {
   Container,
   TextField,
@@ -33,7 +34,7 @@ const Login = () => {
     }
 
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+      const res = await axios.post(`${API_BASE_URL}/auth/login`, { email, password });
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('email', email);
       window.location.href = '/';
@@ -42,7 +43,8 @@ const Login = () => {
     }
   };
   const googleLogin = () => {
-        window.location.href = "http://localhost:5000/auth/google";
+        const baseUrl = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
+        window.location.href = `${baseUrl}/auth/google`;
     };
 
   // If redirected back from Google with ?token=..., store it and go home
